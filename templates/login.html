@@ -6,6 +6,11 @@
     <title>Login - Email Subscription</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js" type="module"></script>
+    <!-- Firebase Auth -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js" type="module"></script>
 </head>
 <body class="bg-gray-100">
     <nav class="bg-white shadow-lg">
@@ -44,34 +49,32 @@
     </main>
 
     <script type="module">
-        // Import Firebase functions from CDN
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
             apiKey: "AIzaSyAXLKyKue10uBRenJvsC81GYQDl0eVXYHc",
-            authDomain: "vibe-coding-cursor.firebaseapp.com",
+            authDomain: "database-project-with-ui-git-v1-somyajain1s-projects.vercel.app",
             projectId: "vibe-coding-cursor",
             storageBucket: "vibe-coding-cursor.firebasestorage.app",
             messagingSenderId: "1048387694267",
             appId: "1:1048387694267:web:a8750e49028e815d47c39e"
         };
-        console.log('Firebase Config:', firebaseConfig); // Debug log
 
         // Initialize Firebase
         try {
-            const app = initializeApp(firebaseConfig);
-            const auth = getAuth(app);
+            window.fbApp = initializeApp(firebaseConfig);
+            const auth = getAuth(window.fbApp);
             const provider = new GoogleAuthProvider();
-            console.log('Firebase initialized successfully'); // Debug log
+            console.log('Firebase initialized successfully');
 
             // Handle Google Sign In
             document.getElementById('googleSignIn').addEventListener('click', async () => {
                 try {
                     const result = await signInWithPopup(auth, provider);
                     const idToken = await result.user.getIdToken();
-                    console.log('Got ID token'); // Debug log
+                    console.log('Got ID token');
 
                     // Send token to backend for verification
                     const response = await fetch('/api/verify-token', {
