@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import os
 import json
 from config.firebase_config import get_firebase_config
+from datetime import datetime
 
 # Load environment variables
 load_dotenv()
@@ -36,6 +37,32 @@ def init_firebase():
 @app.route('/')
 def index():
     return render_template('index.html', firebase_config=get_firebase_config())
+
+@app.route('/api/subscribe', methods=['POST'])
+def subscribe():
+    try:
+        db = init_firebase()
+        if not db:
+            return jsonify({"error": "Firebase not initialized"}), 500
+
+        data = request.json
+        email = data.get('email')
+        
+        if not email:
+            return jsonify({"error": "Email is required"}), 400
+
+        # Store in 'subscribers' collection
+        doc_ref = db.collection('subscribers').document()
+        doc_ref.set({
+            'email': email,
+            'timestamp': datetime.utcnow().isoformat(),
+            'status': 'active'
+        })
+
+        return jsonify({"message": "Successfully subscribed"}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/data', methods=['GET'])
 def get_data():
