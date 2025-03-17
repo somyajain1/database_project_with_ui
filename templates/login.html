@@ -6,10 +6,6 @@
     <title>Login - Email Subscription</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase App (the core Firebase SDK) -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <!-- Firebase Auth -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 </head>
 <body class="bg-gray-100">
     <nav class="bg-white shadow-lg">
@@ -47,102 +43,87 @@
         </div>
     </main>
 
+    <!-- Load Firebase Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
     <script>
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyAXLKyKue10uBRenJvsC81GYQDl0eVXYHc",
-            authDomain: "vibe-coding-cursor.firebaseapp.com",
-            projectId: "vibe-coding-cursor",
-            storageBucket: "vibe-coding-cursor.firebasestorage.app",
-            messagingSenderId: "1048387694267",
-            appId: "1:1048387694267:web:a8750e49028e815d47c39e"
-        };
+        // Wait for Firebase scripts to load
+        window.addEventListener('load', function() {
+            // Your web app's Firebase configuration
+            const firebaseConfig = {
+                apiKey: "AIzaSyAXLKyKue10uBRenJvsC81GYQDl0eVXYHc",
+                authDomain: "vibe-coding-cursor.firebaseapp.com",
+                projectId: "vibe-coding-cursor",
+                storageBucket: "vibe-coding-cursor.firebasestorage.app",
+                messagingSenderId: "1048387694267",
+                appId: "1:1048387694267:web:a8750e49028e815d47c39e"
+            };
 
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        console.log('Firebase initialized');
-
-        // Get auth instance
-        const auth = firebase.auth();
-        console.log('Auth initialized');
-
-        // Handle Google Sign In
-        document.getElementById('googleSignIn').addEventListener('click', async () => {
-            try {
-                // Show loading state
-                const messageDiv = document.getElementById('message');
-                messageDiv.querySelector('p').textContent = 'Signing in...';
-                messageDiv.classList.remove('hidden');
-
-                const provider = new firebase.auth.GoogleAuthProvider();
-                provider.setCustomParameters({
-                    prompt: 'select_account'
-                });
-
-                console.log('Starting sign in...');
-                const result = await auth.signInWithPopup(provider);
-                console.log('Sign in successful');
-                const idToken = await result.user.getIdToken();
-                
-                // Send token to backend
-                const response = await fetch('/api/verify-token', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ idToken })
-                });
-
-                if (response.ok) {
-                    window.location.href = '/';
-                } else {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Login failed');
-                }
-            } catch (error) {
-                console.error('Sign in error:', error);
-                const messageDiv = document.getElementById('message');
-                messageDiv.querySelector('p').textContent = error.message || 'An error occurred during sign-in';
-                messageDiv.classList.remove('hidden');
-
-                if (error.code === 'auth/popup-closed-by-user') {
-                    try {
-                        console.log('Popup failed, trying redirect...');
-                        await auth.signInWithRedirect(provider);
-                    } catch (redirectError) {
-                        console.error('Redirect error:', redirectError);
-                    }
-                }
+            // Initialize Firebase
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
             }
-        });
 
-        // Handle redirect result
-        auth.getRedirectResult().then(async (result) => {
-            if (result && result.user) {
+            const auth = firebase.auth();
+            console.log('Firebase Auth State:', auth.currentUser);
+
+            // Handle Google Sign In
+            document.getElementById('googleSignIn').addEventListener('click', async () => {
                 try {
-                    const idToken = await result.user.getIdToken();
-                    const response = await fetch('/api/verify-token', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ idToken })
+                    // Show loading state
+                    const messageDiv = document.getElementById('message');
+                    messageDiv.querySelector('p').textContent = 'Signing in...';
+                    messageDiv.classList.remove('hidden');
+
+                    const provider = new firebase.auth.GoogleAuthProvider();
+                    provider.setCustomParameters({
+                        prompt: 'select_account'
                     });
 
-                    if (response.ok) {
-                        window.location.href = '/';
-                    } else {
-                        throw new Error('Failed to verify token');
-                    }
+                    // Try redirect instead of popup first
+                    await auth.signInWithRedirect(provider);
                 } catch (error) {
-                    console.error('Token verification error:', error);
+                    console.error('Sign in error:', error);
                     const messageDiv = document.getElementById('message');
-                    messageDiv.querySelector('p').textContent = 'Failed to complete sign-in';
+                    messageDiv.querySelector('p').textContent = error.message || 'An error occurred during sign-in';
                     messageDiv.classList.remove('hidden');
                 }
-            }
-        }).catch((error) => {
-            console.error('Redirect result error:', error);
+            });
+
+            // Check for redirect result immediately
+            auth.getRedirectResult().then(async (result) => {
+                if (result && result.user) {
+                    try {
+                        const idToken = await result.user.getIdToken();
+                        const response = await fetch('/api/verify-token', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ idToken })
+                        });
+
+                        if (response.ok) {
+                            window.location.href = '/';
+                        } else {
+                            throw new Error('Failed to verify token');
+                        }
+                    } catch (error) {
+                        console.error('Token verification error:', error);
+                        const messageDiv = document.getElementById('message');
+                        messageDiv.querySelector('p').textContent = 'Failed to complete sign-in';
+                        messageDiv.classList.remove('hidden');
+                    }
+                }
+            }).catch((error) => {
+                console.error('Redirect result error:', error);
+            });
+
+            // Listen for auth state changes
+            auth.onAuthStateChanged(function(user) {
+                console.log('Auth state changed:', user);
+            });
         });
     </script>
 </body>
