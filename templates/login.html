@@ -52,13 +52,16 @@
             apiKey: "AIzaSyAXLKyKue10uBRenJvsC81GYQDl0eVXYHc",
             authDomain: "vibe-coding-cursor.firebaseapp.com",
             projectId: "vibe-coding-cursor",
-            storageBucket: "vibe-coding-cursor.appspot.com",
+            storageBucket: "vibe-coding-cursor.firebasestorage.app",
             messagingSenderId: "1048387694267",
             appId: "1:1048387694267:web:a8750e49028e815d47c39e"
         };
 
         // Initialize Firebase
         try {
+            console.log('Current domain:', window.location.hostname);
+            console.log('Current full URL:', window.location.href);
+            console.log('Using authDomain:', firebaseConfig.authDomain);
             window.fbApp = initializeApp(firebaseConfig);
             const auth = getAuth(window.fbApp);
             const provider = new GoogleAuthProvider();
