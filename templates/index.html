@@ -18,6 +18,18 @@
                         </a>
                     </div>
                 </div>
+                <div class="flex items-center space-x-4">
+                    {% if user.is_authenticated %}
+                        <span class="text-gray-600">Welcome, {{ user.email }}</span>
+                        <a href="/logout" class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 transition duration-300">
+                            Logout
+                        </a>
+                    {% else %}
+                        <a href="/login" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300">
+                            Login
+                        </a>
+                    {% endif %}
+                </div>
             </div>
         </div>
     </nav>
@@ -27,6 +39,7 @@
             <h1 class="text-4xl font-bold text-gray-800 mb-4">Subscribe to Our Updates</h1>
             <p class="text-xl text-gray-600 mb-8">Stay informed with our latest news and updates.</p>
             
+            {% if user.is_authenticated %}
             <!-- Email Subscription Form -->
             <div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6 mb-8">
                 <h2 class="text-2xl font-semibold mb-4">Join Our Newsletter</h2>
@@ -55,9 +68,21 @@
                     <p class="text-green-500">Thank you for subscribing!</p>
                 </div>
             </div>
+            {% else %}
+            <!-- Login Prompt -->
+            <div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 class="text-2xl font-semibold mb-4">Please Sign In</h2>
+                <p class="text-gray-600 mb-4">You need to be signed in to subscribe to our newsletter.</p>
+                <a href="/login" 
+                   class="inline-block bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300">
+                    Sign in with Google
+                </a>
+            </div>
+            {% endif %}
         </div>
     </main>
 
+    {% if user.is_authenticated %}
     <script type="module">
         // Import Firebase functions from CDN
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
@@ -65,15 +90,14 @@
 
         // Your web app's Firebase configuration
         const firebaseConfig = {{ firebase_config|tojson|safe }};
-        console.log('Firebase Config:', firebaseConfig); // Debug log
 
         // Initialize Firebase
         try {
             const app = initializeApp(firebaseConfig);
             const db = getFirestore(app);
-            console.log('Firebase initialized successfully'); // Debug log
+            console.log('Firebase initialized successfully');
         } catch (error) {
-            console.error('Firebase initialization error:', error); // Debug log
+            console.error('Firebase initialization error:', error);
         }
         
         // Handle form submission
@@ -105,10 +129,11 @@
                     throw new Error(result.error || 'Failed to subscribe');
                 }
             } catch (error) {
-                console.error('Subscription error:', error); // Debug log
+                console.error('Subscription error:', error);
                 alert('Error: ' + error.message);
             }
         });
     </script>
+    {% endif %}
 </body>
 </html> 
