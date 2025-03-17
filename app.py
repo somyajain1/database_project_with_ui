@@ -38,21 +38,28 @@ def init_firebase():
     global firebase_app
     if not firebase_admin._apps:
         try:
+            print("Attempting to initialize Firebase Admin SDK...")
             # For local development, use service account file
             if os.path.exists('firebase-key.json'):
+                print("Using local firebase-key.json file")
                 cred = credentials.Certificate('firebase-key.json')
             # For production (Vercel), use environment variable
             elif os.getenv('FIREBASE_CREDENTIALS'):
+                print("Using FIREBASE_CREDENTIALS environment variable")
                 cred_dict = json.loads(os.getenv('FIREBASE_CREDENTIALS'))
                 cred = credentials.Certificate(cred_dict)
             else:
+                print("No Firebase credentials found!")
                 raise Exception("No Firebase credentials found")
             
             firebase_app = firebase_admin.initialize_app(cred)
             print("Firebase Admin SDK initialized successfully")
             return firestore.client()
         except Exception as e:
-            print(f"Firebase initialization error: {e}")
+            print(f"Firebase initialization error: {str(e)}")
+            print(f"Error type: {type(e)}")
+            if os.getenv('FIREBASE_CREDENTIALS'):
+                print("FIREBASE_CREDENTIALS environment variable exists")
             return None
     return firestore.client()
 
@@ -77,22 +84,39 @@ def logout():
 @app.route('/api/verify-token', methods=['POST'])
 def verify_token():
     try:
+        print("Starting token verification...")
         id_token = request.json.get('idToken')
         if not id_token:
+            print("No token provided in request")
             return jsonify({"error": "No token provided"}), 400
 
+        print("Attempting to verify token...")
+        # Initialize Firebase if not already initialized
+        if not firebase_admin._apps:
+            print("Firebase not initialized, initializing now...")
+            db = init_firebase()
+            if not db:
+                print("Failed to initialize Firebase")
+                return jsonify({"error": "Firebase initialization failed"}), 500
+
         # Verify the Firebase ID token
-        decoded_token = auth.verify_id_token(id_token)
-        uid = decoded_token['uid']
-        email = decoded_token.get('email', '')
+        try:
+            decoded_token = auth.verify_id_token(id_token)
+            print(f"Token verified successfully. User ID: {decoded_token['uid']}")
+            uid = decoded_token['uid']
+            email = decoded_token.get('email', '')
+        except Exception as token_error:
+            print(f"Token verification failed: {str(token_error)}")
+            return jsonify({"error": f"Token verification failed: {str(token_error)}"}), 401
 
         # Create user and log them in
         user = User(uid, email)
         login_user(user)
+        print(f"User logged in successfully: {email}")
         
         return jsonify({"message": "Successfully logged in"}), 200
     except Exception as e:
-        print(f"Token verification error: {e}")
+        print(f"Unexpected error in verify_token: {str(e)}")
         return jsonify({"error": str(e)}), 401
 
 @app.route('/api/subscribe', methods=['POST'])
