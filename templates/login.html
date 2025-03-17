@@ -45,7 +45,7 @@
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
         // Your web app's Firebase configuration
         const firebaseConfig = {
@@ -62,9 +62,12 @@
             console.log('Current domain:', window.location.hostname);
             console.log('Current full URL:', window.location.href);
             console.log('Using authDomain:', firebaseConfig.authDomain);
-            window.fbApp = initializeApp(firebaseConfig);
+            
+            // Initialize Firebase only if it hasn't been initialized yet
+            if (!window.fbApp) {
+                window.fbApp = initializeApp(firebaseConfig);
+            }
             const auth = getAuth(window.fbApp);
-            const provider = new GoogleAuthProvider();
             console.log('Firebase initialized successfully');
 
             // Handle Google Sign In
@@ -80,21 +83,38 @@
                         prompt: 'select_account'
                     });
 
-                    const result = await signInWithPopup(auth, provider).catch(error => {
-                        if (error.code === 'auth/popup-closed-by-user') {
-                            throw new Error('Sign-in was cancelled. Please try again.');
-                        }
-                        throw error;
-                    });
-
-                    if (!result) {
-                        throw new Error('Sign-in failed. Please try again.');
+                    // Try signInWithRedirect if popup fails
+                    try {
+                        const result = await signInWithPopup(auth, provider);
+                        const idToken = await result.user.getIdToken();
+                        console.log('Got ID token');
+                        await handleSignInSuccess(idToken);
+                    } catch (popupError) {
+                        console.warn('Popup sign-in failed, trying redirect:', popupError);
+                        await signInWithRedirect(auth, provider);
                     }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    const messageDiv = document.getElementById('message');
+                    messageDiv.querySelector('p').textContent = error.message || 'An error occurred during sign-in';
+                    messageDiv.classList.remove('hidden');
+                }
+            });
 
+            // Handle redirect result
+            getRedirectResult(auth).then(async (result) => {
+                if (result) {
                     const idToken = await result.user.getIdToken();
-                    console.log('Got ID token');
+                    console.log('Got ID token from redirect');
+                    await handleSignInSuccess(idToken);
+                }
+            }).catch((error) => {
+                console.error('Redirect result error:', error);
+            });
 
-                    // Send token to backend for verification
+            // Helper function to handle successful sign-in
+            async function handleSignInSuccess(idToken) {
+                try {
                     const response = await fetch('/api/verify-token', {
                         method: 'POST',
                         headers: {
@@ -104,19 +124,19 @@
                     });
 
                     if (response.ok) {
-                        // Redirect to home page after successful login
                         window.location.href = '/';
                     } else {
                         const error = await response.json();
                         throw new Error(error.error || 'Login failed');
                     }
                 } catch (error) {
-                    console.error('Login error:', error);
+                    console.error('Token verification error:', error);
                     const messageDiv = document.getElementById('message');
-                    messageDiv.querySelector('p').textContent = error.message || 'An error occurred during sign-in';
+                    messageDiv.querySelector('p').textContent = 'Failed to verify login. Please try again.';
                     messageDiv.classList.remove('hidden');
                 }
-            });
+            }
+
         } catch (error) {
             console.error('Firebase initialization error:', error);
             const messageDiv = document.getElementById('message');
