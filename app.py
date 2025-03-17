@@ -14,21 +14,24 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'default-secret-key')
 
-# Initialize Firebase (with error handling for serverless environment)
-firebase_app = None
-
+# Initialize Firebase Admin SDK
 def init_firebase():
     global firebase_app
     if not firebase_admin._apps:
         try:
-            if os.getenv('FIREBASE_CREDENTIALS'):
+            # For local development, use service account file
+            if os.path.exists('firebase-key.json'):
+                cred = credentials.Certificate('firebase-key.json')
+            # For production (Vercel), use environment variable
+            elif os.getenv('FIREBASE_CREDENTIALS'):
                 cred_dict = json.loads(os.getenv('FIREBASE_CREDENTIALS'))
                 cred = credentials.Certificate(cred_dict)
             else:
-                # Fallback to file (development only)
-                cred = credentials.Certificate("firebase-key.json")
+                raise Exception("No Firebase credentials found")
             
             firebase_app = firebase_admin.initialize_app(cred)
+            print("Firebase Admin SDK initialized successfully")
+            return firestore.client()
         except Exception as e:
             print(f"Firebase initialization error: {e}")
             return None
@@ -47,13 +50,13 @@ def subscribe():
 
         data = request.json
         email = data.get('email')
-        name = data.get('name', '')  # Optional name field
+        name = data.get('name', '')
         
         if not email:
             return jsonify({"error": "Email is required"}), 400
 
-        # Store in 'users_email' collection
-        doc_ref = db.collection('users_email').document()
+        # Store in Firestore
+        doc_ref = db.collection('subscribers').document()
         doc_ref.set({
             'email': email,
             'name': name,
@@ -64,6 +67,7 @@ def subscribe():
         return jsonify({"message": "Successfully subscribed"}), 200
 
     except Exception as e:
+        print(f"Subscription error: {e}")  # Add server-side logging
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/data', methods=['GET'])
