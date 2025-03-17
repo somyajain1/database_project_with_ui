@@ -11,7 +11,7 @@ from datetime import datetime
 # Load environment variables
 load_dotenv()
 
-# Initialize Flask app
+# Initialize Flask app with debug mode for better error tracking
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'default-secret-key')
 
