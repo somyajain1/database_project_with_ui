@@ -50,41 +50,51 @@
 
         // Your web app's Firebase configuration
         const firebaseConfig = {{ firebase_config|tojson|safe }};
+        console.log('Firebase Config:', firebaseConfig); // Debug log
 
         // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
+        try {
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const provider = new GoogleAuthProvider();
+            console.log('Firebase initialized successfully'); // Debug log
 
-        // Handle Google Sign In
-        document.getElementById('googleSignIn').addEventListener('click', async () => {
-            try {
-                const result = await signInWithPopup(auth, provider);
-                const idToken = await result.user.getIdToken();
+            // Handle Google Sign In
+            document.getElementById('googleSignIn').addEventListener('click', async () => {
+                try {
+                    const result = await signInWithPopup(auth, provider);
+                    const idToken = await result.user.getIdToken();
+                    console.log('Got ID token'); // Debug log
 
-                // Send token to backend for verification
-                const response = await fetch('/api/verify-token', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ idToken })
-                });
+                    // Send token to backend for verification
+                    const response = await fetch('/api/verify-token', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ idToken })
+                    });
 
-                if (response.ok) {
-                    // Redirect to home page after successful login
-                    window.location.href = '/';
-                } else {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Login failed');
+                    if (response.ok) {
+                        // Redirect to home page after successful login
+                        window.location.href = '/';
+                    } else {
+                        const error = await response.json();
+                        throw new Error(error.error || 'Login failed');
+                    }
+                } catch (error) {
+                    console.error('Login error:', error);
+                    const messageDiv = document.getElementById('message');
+                    messageDiv.querySelector('p').textContent = error.message;
+                    messageDiv.classList.remove('hidden');
                 }
-            } catch (error) {
-                console.error('Login error:', error);
-                const messageDiv = document.getElementById('message');
-                messageDiv.querySelector('p').textContent = error.message;
-                messageDiv.classList.remove('hidden');
-            }
-        });
+            });
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            const messageDiv = document.getElementById('message');
+            messageDiv.querySelector('p').textContent = 'Failed to initialize Firebase: ' + error.message;
+            messageDiv.classList.remove('hidden');
+        }
     </script>
 </body>
 </html> 

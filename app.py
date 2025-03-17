@@ -58,11 +58,15 @@ def init_firebase():
 
 @app.route('/')
 def index():
-    return render_template('index.html', firebase_config=get_firebase_config(), user=current_user)
+    firebase_config = get_firebase_config()
+    print("Firebase Config for client:", firebase_config)  # Debug log
+    return render_template('index.html', firebase_config=firebase_config, user=current_user)
 
 @app.route('/login')
 def login():
-    return render_template('login.html', firebase_config=get_firebase_config())
+    firebase_config = get_firebase_config()
+    print("Firebase Config for login:", firebase_config)  # Debug log
+    return render_template('login.html', firebase_config=firebase_config)
 
 @app.route('/logout')
 @login_required
