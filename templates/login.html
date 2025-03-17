@@ -49,7 +49,14 @@
         import { getAuth, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 
         // Your web app's Firebase configuration
-        const firebaseConfig = {{ firebase_config|tojson|safe }};
+        const firebaseConfig = {
+            apiKey: "AIzaSyAXLKyKue10uBRenJvsC81GYQDl0eVXYHc",
+            authDomain: "vibe-coding-cursor.firebaseapp.com",
+            projectId: "vibe-coding-cursor",
+            storageBucket: "vibe-coding-cursor.firebasestorage.app",
+            messagingSenderId: "1048387694267",
+            appId: "1:1048387694267:web:a8750e49028e815d47c39e"
+        };
         console.log('Firebase Config:', firebaseConfig); // Debug log
 
         // Initialize Firebase
