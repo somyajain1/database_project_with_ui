@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your App Name</title>
+    <title>Email Subscription</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <!-- Firebase App (the core Firebase SDK) -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js"></script>
 </head>
 <body class="bg-gray-100">
     <nav class="bg-white shadow-lg">
@@ -17,12 +17,9 @@
                 <div class="flex space-x-7">
                     <div>
                         <a href="#" class="flex items-center py-4">
-                            <span class="font-semibold text-gray-500 text-lg">Your App Name</span>
+                            <span class="font-semibold text-gray-500 text-lg">Email Subscription</span>
                         </a>
                     </div>
-                </div>
-                <div class="flex items-center space-x-3">
-                    <a href="#" class="py-2 px-4 bg-blue-500 hover:bg-blue-600 text-white rounded transition duration-300">Get Started</a>
                 </div>
             </div>
         </div>
@@ -30,12 +27,12 @@
 
     <main class="max-w-6xl mx-auto mt-10 px-4">
         <div class="text-center">
-            <h1 class="text-4xl font-bold text-gray-800 mb-4">Welcome to Your App</h1>
-            <p class="text-xl text-gray-600 mb-8">Your awesome app description goes here.</p>
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">Subscribe to Our Updates</h1>
+            <p class="text-xl text-gray-600 mb-8">Stay informed with our latest news and updates.</p>
             
             <!-- Email Subscription Form -->
             <div class="max-w-md mx-auto bg-white rounded-lg shadow-md p-6 mb-8">
-                <h2 class="text-2xl font-semibold mb-4">Subscribe to Updates</h2>
+                <h2 class="text-2xl font-semibold mb-4">Join Our Newsletter</h2>
                 <form id="emailForm" class="space-y-4">
                     <div>
                         <input type="email" 
@@ -61,26 +58,20 @@
                     <p class="text-green-500">Thank you for subscribing!</p>
                 </div>
             </div>
-
-            <div class="space-x-4">
-                <button class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300">
-                    Learn More
-                </button>
-                <button class="bg-white hover:bg-gray-100 text-gray-800 font-semibold py-2 px-6 border border-gray-400 rounded-lg shadow transition duration-300">
-                    Documentation
-                </button>
-            </div>
-        </div>
-
-        <div id="data-container" class="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Data from Firebase will be displayed here -->
         </div>
     </main>
 
-    <script>
-        // Initialize Firebase with configuration from Flask
+    <script type="module">
+        // Import Firebase functions
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+        import { getFirestore } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore.js';
+
+        // Your web app's Firebase configuration
         const firebaseConfig = {{ firebase_config|tojson|safe }};
-        firebase.initializeApp(firebaseConfig);
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
         
         // Handle form submission
         document.getElementById('emailForm').addEventListener('submit', async (e) => {
@@ -114,23 +105,6 @@
                 alert('Error: ' + error.message);
             }
         });
-
-        // Fetch data from your Flask backend
-        fetch('/api/data')
-            .then(response => response.json())
-            .then(data => {
-                const container = document.getElementById('data-container');
-                data.forEach(item => {
-                    const card = document.createElement('div');
-                    card.className = 'bg-white rounded-lg shadow p-6';
-                    card.innerHTML = `
-                        <h3 class="text-lg font-semibold">${item.title || 'Title'}</h3>
-                        <p class="text-gray-600">${item.description || 'Description'}</p>
-                    `;
-                    container.appendChild(card);
-                });
-            })
-            .catch(error => console.error('Error:', error));
     </script>
 </body>
 </html> 
