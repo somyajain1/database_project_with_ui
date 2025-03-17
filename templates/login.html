@@ -70,7 +70,27 @@
             // Handle Google Sign In
             document.getElementById('googleSignIn').addEventListener('click', async () => {
                 try {
-                    const result = await signInWithPopup(auth, provider);
+                    // Show loading state
+                    const messageDiv = document.getElementById('message');
+                    messageDiv.querySelector('p').textContent = 'Signing in...';
+                    messageDiv.classList.remove('hidden');
+
+                    const provider = new GoogleAuthProvider();
+                    provider.setCustomParameters({
+                        prompt: 'select_account'
+                    });
+
+                    const result = await signInWithPopup(auth, provider).catch(error => {
+                        if (error.code === 'auth/popup-closed-by-user') {
+                            throw new Error('Sign-in was cancelled. Please try again.');
+                        }
+                        throw error;
+                    });
+
+                    if (!result) {
+                        throw new Error('Sign-in failed. Please try again.');
+                    }
+
                     const idToken = await result.user.getIdToken();
                     console.log('Got ID token');
 
@@ -93,7 +113,7 @@
                 } catch (error) {
                     console.error('Login error:', error);
                     const messageDiv = document.getElementById('message');
-                    messageDiv.querySelector('p').textContent = error.message;
+                    messageDiv.querySelector('p').textContent = error.message || 'An error occurred during sign-in';
                     messageDiv.classList.remove('hidden');
                 }
             });
