@@ -163,6 +163,27 @@ def get_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/subscribers')
+@login_required
+def subscribers_page():
+    try:
+        db = init_firebase()
+        if not db:
+            return "Failed to initialize Firebase", 500
+        
+        # Fetch all subscribers
+        subscribers = []
+        docs = db.collection('subscribers').stream()
+        for doc in docs:
+            data = doc.to_dict()
+            data['id'] = doc.id  # Add document ID
+            subscribers.append(data)
+        
+        return render_template('subscribers.html', subscribers=subscribers)
+    except Exception as e:
+        print(f"Error fetching subscribers: {e}")
+        return str(e), 500
+
 # Required for Vercel
 app.debug = os.getenv('DEBUG', 'False').lower() == 'true'
 
