@@ -47,14 +47,16 @@ def subscribe():
 
         data = request.json
         email = data.get('email')
+        name = data.get('name', '')  # Optional name field
         
         if not email:
             return jsonify({"error": "Email is required"}), 400
 
-        # Store in 'subscribers' collection
-        doc_ref = db.collection('subscribers').document()
+        # Store in 'users_email' collection
+        doc_ref = db.collection('users_email').document()
         doc_ref.set({
             'email': email,
+            'name': name,
             'timestamp': datetime.utcnow().isoformat(),
             'status': 'active'
         })
