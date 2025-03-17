@@ -15,29 +15,33 @@ app.secret_key = os.getenv('SECRET_KEY', 'default-secret-key')
 
 # Initialize Firebase (with error handling for serverless environment)
 firebase_app = None
-try:
-    if not firebase_admin._apps:  # Only initialize if not already initialized
-        if os.getenv('FIREBASE_CREDENTIALS'):
-            cred_dict = json.loads(os.getenv('FIREBASE_CREDENTIALS'))
-            cred = credentials.Certificate(cred_dict)
-        else:
-            # Fallback to file (development only)
-            cred = credentials.Certificate("firebase-key.json")
-        
-        firebase_app = firebase_admin.initialize_app(cred)
-    db = firestore.client()
-except Exception as e:
-    print(f"Firebase initialization error: {e}")
+
+def init_firebase():
+    global firebase_app
+    if not firebase_admin._apps:
+        try:
+            if os.getenv('FIREBASE_CREDENTIALS'):
+                cred_dict = json.loads(os.getenv('FIREBASE_CREDENTIALS'))
+                cred = credentials.Certificate(cred_dict)
+            else:
+                # Fallback to file (development only)
+                cred = credentials.Certificate("firebase-key.json")
+            
+            firebase_app = firebase_admin.initialize_app(cred)
+        except Exception as e:
+            print(f"Firebase initialization error: {e}")
+            return None
+    return firestore.client()
 
 @app.route('/')
 def index():
-    # Pass Firebase config to template
     return render_template('index.html', firebase_config=get_firebase_config())
 
 @app.route('/api/data', methods=['GET'])
 def get_data():
     try:
-        if not firebase_app:
+        db = init_firebase()
+        if not db:
             return jsonify({"error": "Firebase not initialized"}), 500
         
         docs = db.collection('collection_name').stream()
@@ -46,8 +50,9 @@ def get_data():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Vercel requires this for serverless deployment
+# Required for Vercel
 app.debug = os.getenv('DEBUG', 'False').lower() == 'true'
 
+# This is important for Vercel
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000))) 
