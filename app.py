@@ -11,6 +11,7 @@ from datetime import datetime
 # Load environment variables
 load_dotenv()
 
+# Version: 1.0.1 - Adding version tracking for deployment
 # Initialize Flask app with debug mode for better error tracking
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'default-secret-key')
